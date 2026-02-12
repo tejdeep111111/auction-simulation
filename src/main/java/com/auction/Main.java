@@ -1,6 +1,7 @@
 package com.auction;
 
 import com.auction.model.AuctionItem;
+import javafx.animation.ScaleTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -11,6 +12,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.scene.control.*;
+import javafx.util.Duration;
 
 import java.util.Arrays;
 import java.util.List;
@@ -29,7 +31,6 @@ public class Main extends Application {
         );
 
         //Using the layout FLOWPANE
-
         FlowPane flowPane = new FlowPane();
         flowPane.setPadding(new Insets(20));
         flowPane.setHgap(20);
@@ -79,8 +80,49 @@ public class Main extends Application {
         Label priceLabel = new Label();
         priceLabel.textProperty().bind(item.currentPriceProperty().asString("$%.2f"));
 
-        Label timeLabel = new Label();
-        timeLabel.textProperty().bind(item.timeLeftProperty().asString("Ends in: %ds"));
+        priceLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 20px;");
+
+        //Scale transition for price label
+        ScaleTransition scalePrice = new ScaleTransition(Duration.millis(150), priceLabel);
+        scalePrice.setByX(0.1);
+        scalePrice.setByY(0.1);
+        scalePrice.setCycleCount(2); //Goes up and then back down
+        scalePrice.setAutoReverse(true);
+
+        //IT listens to priceProperty to trigger itself
+        item.currentPriceProperty().addListener((observable, oldValue, newValue) -> {
+            //First stop any transioins currently running
+            scalePrice.stop();
+
+            //Prevent stacking of transitions
+            priceLabel.setScaleX(1);
+            priceLabel.setScaleY(1);
+
+            scalePrice.playFromStart();
+        });
+
+        HBox timerBox = new HBox(5);
+        timerBox.setAlignment(Pos.CENTER_LEFT);
+
+        Label timerIcon = new Label("⏱");
+        timerIcon.setStyle("-fx-font-size: 20px;");
+
+        Label timeValueLabel = new Label();
+        timeValueLabel.textProperty().bind(item.timeLeftProperty().asString("%ds"));
+
+        timerBox.getChildren().addAll(timerIcon, timeValueLabel);
+
+        item.timeLeftProperty().addListener((obs, oldVal, newVal) -> {
+            int secondsLeft = newVal.intValue();
+
+            if (secondsLeft <= 10 && secondsLeft > 0) {
+                // Turn the timer red and bold when under 10 seconds
+                timerIcon.setStyle("-fx-text-fill: red; -fx-font-weight: bold; -fx-font-size: 16px;");
+                timeValueLabel.setStyle("-fx-text-fill: red;");
+            } else if (secondsLeft <= 0) {
+                timeValueLabel.setStyle("-fx-text-fill: gray; -fx-font-style: italic;");
+            }
+        });
 
         //BID INPUT AREA
         HBox bidBox = new HBox(5);
@@ -92,21 +134,47 @@ public class Main extends Application {
         Button bidButton = new Button("Place Bid");
         bidButton.setStyle("-fx-background-color: #1976d2; -fx-text-fill: white; -fx-font-weight: bold;");
 
-        //Disable button when the timer dies
-        item.timeLeftProperty().addListener((obs, oldVal, newVal) -> {
-            if(newVal.intValue() <= 0) {
-                bidButton.setDisable(true);
-                bidField.setDisable(true);
-                card.setStyle(card.getStyle() + "-fx-opacity: 0.6; -fx-background-color: #eeeeee;");
-            }
-        });
 
         bidButton.setOnAction(e -> handleBid(item, bidField));
 
         bidBox.getChildren().addAll(bidField, bidButton);
         bidBox.setAlignment(Pos.CENTER_LEFT);
 
-        card.getChildren().addAll(nameLabel, new Separator(), priceLabel, timeLabel, bidBox);
+        //QUICK BID Buttons
+        Button plus20 = new Button("+ $20");
+        Button plus50 = new Button("+ $50");
+        Button plus100 = new Button("+ $100");
+
+        String quickButtonStyle = "-fx-background-color: #e0e0e0; -fx-border-color: #ccc; -fx-border-radius: 5; -fx-background-radius: 5;";
+        plus20.setStyle(quickButtonStyle);
+        plus50.setStyle(quickButtonStyle);
+        plus100.setStyle(quickButtonStyle);
+
+        plus20.setOnAction(e -> handleQuickBid(item, 20));
+        plus50.setOnAction(e -> handleQuickBid(item, 50));
+        plus100.setOnAction(e -> handleQuickBid(item, 100));
+
+        HBox quickBidBox = new HBox(10);
+        quickBidBox.setAlignment(Pos.CENTER);
+
+        quickBidBox.getChildren().addAll(plus20, plus50, plus100);
+
+        //Disable button when the timer dies
+        item.timeLeftProperty().addListener((obs, oldVal, newVal) -> {
+            if(newVal.intValue() <= 0) {
+                bidButton.setDisable(true);
+                bidField.setDisable(true);
+                quickBidBox.setDisable(true);
+                card.setStyle(card.getStyle() + "-fx-opacity: 0.6; -fx-background-color: #eeeeee;");
+
+                //Update the scale of the final price to somewhat larger
+                priceLabel.setScaleX(1.1);
+                priceLabel.setScaleY(1.1);
+
+            }
+        });
+
+        card.getChildren().addAll(nameLabel, new Separator(), priceLabel, timerBox, quickBidBox, bidBox);
 
         return card;
     }
@@ -128,6 +196,11 @@ public class Main extends Application {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.show();
+    }
+
+    private void handleQuickBid(AuctionItem item, double increment) {
+        double newBid = item.currentPriceProperty().doubleValue() + increment;
+        item.placeBid(newBid);
     }
 
     static void main(String[] args) {
