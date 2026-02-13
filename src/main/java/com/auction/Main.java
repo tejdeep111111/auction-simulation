@@ -1,5 +1,6 @@
 package com.auction;
 
+import com.auction.database.DatabaseManager;
 import com.auction.model.AuctionItem;
 import javafx.animation.ScaleTransition;
 import javafx.application.Application;
@@ -14,21 +15,16 @@ import javafx.stage.Stage;
 import javafx.scene.control.*;
 import javafx.util.Duration;
 
-import java.util.Arrays;
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 
 public class Main extends Application {
     @Override
     public void start(Stage stage) {
-        List<AuctionItem> items = Arrays.asList(
-                new AuctionItem("Electric Guitar", 500.0, 120),
-                new AuctionItem("Rare Coin", 1500.0, 45),
-                new AuctionItem("Modern Art", 3000.0, 300),
-                new AuctionItem("Vintage Camera", 250.0, 60),
-                new AuctionItem("Gaming Console", 400.0, 90),
-                new AuctionItem("Designer Watch", 2200.0, 15)
-        );
+
+        List<AuctionItem> items = loadItemsFromDB();
 
         //Using the layout FLOWPANE
         FlowPane flowPane = new FlowPane();
@@ -50,6 +46,40 @@ public class Main extends Application {
         stage.setScene(scene);
         stage.setTitle("Auction Simulation");
         stage.show();
+    }
+
+    public List<AuctionItem> loadItemsFromDB() {
+        List<AuctionItem> items = new ArrayList<>();
+        String query = "SELECT name, current_price, time_left FROM Items";
+        //try-with-resourses statement. This handles automatic resourse management
+        try(Connection connection = DatabaseManager.getConnection();
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(query) ) {
+
+            while (resultSet.next()) {
+                items.add(new AuctionItem(resultSet.getString("name"), resultSet.getDouble("current_price"), resultSet.getInt("time_left")));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return items;
+    }
+
+    private void updatePriceInDB(String itemName, double newPrice) {
+        String updateQuery = "UPDATE Items SET current_price = ? WHERE name = ?";
+
+        try(Connection connection = DatabaseManager.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
+
+            preparedStatement.setDouble(1, newPrice);
+            preparedStatement.setString(2, itemName);
+
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     private void startAuctionTimer(AuctionItem item) {
@@ -182,7 +212,10 @@ public class Main extends Application {
     private void handleBid(AuctionItem item, TextField field) {
         try {
             double amount = Double.parseDouble(field.getText());
-            if(!item.placeBid(amount)) {
+            if(item.placeBid(amount)) {
+                //If bid placed successfully update it in DB
+                updatePriceInDB(item.getName(), amount);
+            } else {
                 showToast("Bid too low!!");
             }
             field.clear();
@@ -200,7 +233,9 @@ public class Main extends Application {
 
     private void handleQuickBid(AuctionItem item, double increment) {
         double newBid = item.currentPriceProperty().doubleValue() + increment;
-        item.placeBid(newBid);
+        if(item.placeBid(newBid)) {
+            updatePriceInDB(item.getName(), newBid);
+        }
     }
 
     static void main(String[] args) {
