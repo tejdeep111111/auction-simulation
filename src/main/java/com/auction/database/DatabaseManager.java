@@ -1,5 +1,7 @@
 package com.auction.database;
 
+import com.auction.model.User;
+
 import java.sql.*;
 
 public class DatabaseManager {

@@ -7,12 +7,14 @@ public class AuctionItem {
     private final String name;
     private DoubleProperty currentPrice;
     private IntegerProperty timeLeft;
+    private final String category;
     private final Object lock = new Object();
 
-    public AuctionItem(String name, double startingPrice, int duration) {
+    public AuctionItem(String name, double startingPrice, int duration, String category) {
         this.name = name;
         this.currentPrice = new SimpleDoubleProperty(startingPrice);
         this.timeLeft = new SimpleIntegerProperty(duration);
+        this.category = category;
     }
 
     public boolean placeBid(double amount) {
