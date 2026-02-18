@@ -3,6 +3,7 @@ package com.auction.ui;
 import com.auction.Main;
 import com.auction.database.ItemDAO;
 import com.auction.model.AuctionItem;
+import com.auction.util.SessionManager;
 import javafx.animation.ScaleTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -122,7 +123,7 @@ public class AuctionCard extends VBox{
         button.setOnAction(e -> {
             double newPrice = item.currentPriceProperty().get() + amount;
             if(item.placeBid(newPrice)) {
-                ItemDAO.updatePriceInDB(item.getName(), newPrice);
+                ItemDAO.placeBidWithLog(item.getId(),SessionManager.getCurrentUser().getUser_Id(), item.getName(), newPrice);
             }
         });
 
@@ -132,8 +133,9 @@ public class AuctionCard extends VBox{
     private boolean handleBid(AuctionItem item, TextField field) {
         try {
             double amount = Double.parseDouble(field.getText());
+
             if(item.placeBid(amount)) {
-                ItemDAO.updatePriceInDB(item.getName(), amount);
+                ItemDAO.placeBidWithLog(item.getId(), SessionManager.getCurrentUser().getUser_Id(), item.getName(), amount);
                 return true;
             } else {
                 Main.showToast("Bid too low!!");

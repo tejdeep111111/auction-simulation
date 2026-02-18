@@ -5,7 +5,7 @@ import com.auction.util.Enums;
 import java.util.Locale;
 
 public class User {
-    private int user_Id;
+    private final int user_Id;
     private String username;
     private Enums.UserRole userRole;
 

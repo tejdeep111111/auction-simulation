@@ -9,8 +9,13 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import javafx.scene.image.*;
 
 import java.util.List;
 
@@ -22,19 +27,44 @@ public class MainDashboard {
         BorderPane root = new BorderPane();
 
         //1- TOP HEADER
-        HBox header = new HBox();
+        HBox header = new HBox(20);
         header.setPadding(new Insets(15, 25, 15, 25));
         header.setAlignment(Pos.CENTER_LEFT);
         header.setStyle("-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 0 0 1 0;");
 
-        Label appName = new Label("AUCTION PRO ⏱");
-        appName.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: Black;");
+        Label homeLabel = new Label("HOME");
+        homeLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: Black;");
+
+        Label usernameLabel = new Label(SessionManager.getCurrentUser().getUsername());
+        usernameLabel.setStyle("-fx-font-size: 13px");
+
+        //Admin tools
+        HBox adminToolBar = new HBox(10);
+        adminToolBar.setAlignment(Pos.CENTER_LEFT);
+        //Admin functionality to add items
+        if(SessionManager.getCurrentUser().getRole().equals("admin")) {
+            Button addButton = new Button("+ Add Item");
+            addButton.setStyle("-fx-background-color: black; -fx-text-fill: white;");
+            addButton.setOnAction(e -> showAddItemDialog());
+
+            Button bidLogsButton = new Button("Bid logs");
+            bidLogsButton.setStyle("-fx-background-color: black; -fx-text-fill: white;");
+            bidLogsButton.setOnAction(e -> showBidLogsDialog());
+            adminToolBar.getChildren().addAll(addButton, bidLogsButton);
+        }
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-
-        header.getChildren().addAll(appName, spacer);
+        //Logo Icon at the far right
+        try {
+            ImageView logoView = new ImageView(new Image(getClass().getResourceAsStream("/login-view-logo.png")));
+            logoView.setFitHeight(40);
+            logoView.setPreserveRatio(true);
+            header.getChildren().addAll(homeLabel, adminToolBar, spacer, usernameLabel, logoView);
+        } catch(Exception e) {
+            header.getChildren().addAll(homeLabel, adminToolBar, usernameLabel, spacer);
+        }
 
         //2- NAVIGATION PANEL LEFT
         VBox nav = new VBox(10);
@@ -66,14 +96,6 @@ public class MainDashboard {
         root.setTop(header);
         root.setLeft(nav);
         root.setCenter(scrollPane);
-
-        //Admin functionality to add items
-        if(SessionManager.getCurrentUser().getRole().equals("admin")) {
-            Button addButton = new Button("+ Add Item");
-            addButton.setStyle("-fx-background-color: black; -fx-text-fill: white;");
-            addButton.setOnAction(e -> showAddItemDialog());
-            header.getChildren().add(1, addButton);
-        }
 
         refreshItems("All");
         stage.setScene(new Scene(root, 1100, 750));
@@ -145,6 +167,25 @@ public class MainDashboard {
 
         form.getChildren().addAll(new Label("Add New Item"), nameInput, priceInput, timeInput, categoryList, saveButton);
         dialog.setScene(new Scene(form, 300, 400));
+        dialog.show();
+    }
+
+    private void showBidLogsDialog() {
+        Stage dialog = new Stage();
+        dialog.setTitle("Global Bid logs");
+
+        VBox root = new VBox(10);
+        root.setPadding(new Insets(20));
+
+        ListView<String> listView = new ListView<>();
+        listView.getItems().addAll(ItemDAO.getBidLogs());
+        listView.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 13px;");
+
+        Label title = new Label("Audit Trail: All Bidding Activity");
+        title.setStyle("-fx-font-weight: bold; -fx-font-size: 16px");
+
+        root.getChildren().addAll(title, listView);
+        dialog.setScene(new Scene(root, 500, 400));
         dialog.show();
     }
 

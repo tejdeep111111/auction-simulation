@@ -4,13 +4,15 @@ import javafx.beans.property.*;
 
 
 public class AuctionItem {
+    private final int id;
     private final String name;
     private DoubleProperty currentPrice;
     private IntegerProperty timeLeft;
     private final String category;
     private final Object lock = new Object();
 
-    public AuctionItem(String name, double startingPrice, int duration, String category) {
+    public AuctionItem(int id, String name, double startingPrice, int duration, String category) {
+        this.id = id;
         this.name = name;
         this.currentPrice = new SimpleDoubleProperty(startingPrice);
         this.timeLeft = new SimpleIntegerProperty(duration);
@@ -25,6 +27,10 @@ public class AuctionItem {
             }
             return false;
         }
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getName() {

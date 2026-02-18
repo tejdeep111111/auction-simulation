@@ -10,8 +10,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
-import static com.auction.database.ItemDAO.updatePriceInDB;
-import static javafx.application.Application.launch;
 
 public class Main extends Application {
     @Override
