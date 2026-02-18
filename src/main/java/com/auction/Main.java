@@ -7,6 +7,7 @@ import com.auction.ui.MainDashboard;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 import static com.auction.database.ItemDAO.updatePriceInDB;
@@ -15,6 +16,13 @@ import static javafx.application.Application.launch;
 public class Main extends Application {
     @Override
     public void start(Stage stage) {
+        try {
+            // Option A: If logo is in your resources folder
+            Image icon = new Image(getClass().getResourceAsStream("/app-logo.png"));
+            stage.getIcons().add(icon);
+        } catch (Exception e) {
+            System.out.println("App icon could not be loaded: " + e.getMessage());
+        }
         LoginView loginView = new LoginView();
 
         //onSuccess runnable task
@@ -22,6 +30,8 @@ public class Main extends Application {
             MainDashboard dashboard = new MainDashboard();
             dashboard.show(stage);
         });
+
+        stage.setTitle("Auction PRO");
         stage.show();
     }
 

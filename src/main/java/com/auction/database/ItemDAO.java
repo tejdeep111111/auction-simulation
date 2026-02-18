@@ -45,4 +45,21 @@ public class ItemDAO {
         }).start();
 
     }
+
+    public static boolean addItem(String name, double price, int duration, String category) {
+        String sql = "INSERT INTO Items (name, current_price, time_left, category) VALUES (?, ?, ?, ?)";
+        try (Connection connection = DatabaseManager.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            preparedStatement.setString(1, name);
+            preparedStatement.setDouble(2, price);
+            preparedStatement.setInt(3, duration);
+            preparedStatement.setString(4, category);
+
+            return preparedStatement.executeUpdate() > 0;
+        } catch (SQLException  e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
