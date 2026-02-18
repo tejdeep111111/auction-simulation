@@ -6,8 +6,8 @@ import javafx.beans.property.*;
 public class AuctionItem {
     private final int id;
     private final String name;
-    private DoubleProperty currentPrice;
-    private IntegerProperty timeLeft;
+    private final DoubleProperty currentPrice;
+    private final IntegerProperty timeLeft;
     private final String category;
     private final Object lock = new Object();
 

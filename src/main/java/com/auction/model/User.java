@@ -2,12 +2,10 @@ package com.auction.model;
 
 import com.auction.util.Enums;
 
-import java.util.Locale;
-
 public class User {
     private final int user_Id;
-    private String username;
-    private Enums.UserRole userRole;
+    private final String username;
+    private final Enums.UserRole userRole;
 
     public User(int id, String username, String role) {
         this.user_Id = id;
