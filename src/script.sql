@@ -46,3 +46,11 @@ INSERT INTO Items (name, current_price, time_left, category) VALUES
 ('Drawing', 812.00, 639, 'Art'),
 ('High-End Drone', 1590.00, 174, 'Electronics'),
 ('Typewriter (1950s)', 740.00, 294, 'Vintage');
+
+-- Favorites feature
+CREATE TABLE Favorites (
+    user_id INT,
+    item_id INT,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (item_id) REFERENCES Items(item_id) ON DELETE CASCADE
+);

@@ -23,6 +23,8 @@ public class AuctionCard extends VBox{
         //
         this.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);");
 
+        setupFavoriteStar(item);
+
         Label nameLabel = new Label(item.getName());
         nameLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
 
@@ -145,5 +147,28 @@ public class AuctionCard extends VBox{
             Main.showToast("Numbers only!!");
             return false;
         }
+    }
+
+    private void setupFavoriteStar(AuctionItem item) {
+        Label star = new Label();
+        int userId = SessionManager.getCurrentUser().getUser_Id();
+        int itemID = item.getId();
+
+        //Set initial state
+        updateStarUI(star ,ItemDAO.isFavorite(userId, itemID));
+
+        star.setOnMouseClicked(e -> {
+            ItemDAO.toggleFavorite(userId, itemID);
+            updateStarUI(star, ItemDAO.isFavorite(userId, itemID));
+        });
+
+        star.setStyle("-fx-font-size: 18px; -fx-cursor: hand;");
+        //Position it in your card
+        this.getChildren().add(0, star);
+    }
+
+    private void updateStarUI(Label star, boolean isFav) {
+        star.setText("☆");
+        star.setTextFill(isFav ? javafx.scene.paint.Color.GOLD : javafx.scene.paint.Color.GRAY);
     }
 }

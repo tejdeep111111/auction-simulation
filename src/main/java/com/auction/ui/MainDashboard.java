@@ -17,6 +17,7 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.scene.image.*;
 
+import java.sql.Statement;
 import java.util.List;
 
 
@@ -56,14 +57,21 @@ public class MainDashboard {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
+        //Log out button
+        Button logoutButton = new Button("Log Out ->");
+        logoutButton.setStyle("-fx-background-color: transparent; -fx-text-fill: black; -fx-font-weight: bold; -fx-cursor: hand;");
+        logoutButton.setOnAction(e -> {
+            showLoginScreen();
+        });
+
         //Logo Icon at the far right
         try {
             ImageView logoView = new ImageView(new Image(getClass().getResourceAsStream("/login-view-logo.png")));
             logoView.setFitHeight(40);
             logoView.setPreserveRatio(true);
-            header.getChildren().addAll(homeLabel, adminToolBar, spacer, usernameLabel, logoView);
+            header.getChildren().addAll(homeLabel, adminToolBar, spacer, usernameLabel, logoutButton, logoView);
         } catch(Exception e) {
-            header.getChildren().addAll(homeLabel, adminToolBar, usernameLabel, spacer);
+            header.getChildren().addAll(homeLabel, adminToolBar, usernameLabel, logoutButton, spacer);
         }
 
         //2- NAVIGATION PANEL LEFT
@@ -84,6 +92,10 @@ public class MainDashboard {
             btn.setOnAction(e -> refreshItems(cat));
             nav.getChildren().add(btn);
         }
+        Button favsBtn = new Button("My Favorites");
+        favsBtn.setStyle("-fx-font-size: 16px; -fx-background-color: transparent; -fx-text-fill: #FFD700; -fx-cursor: hand; -fx-font-weight: bold;");
+        favsBtn.setOnAction(e -> showFavorites());
+        nav.getChildren().add(favsBtn);
 
         //3- CENTRE CONTENT
         cardContainer = new FlowPane(20, 20);
@@ -189,4 +201,29 @@ public class MainDashboard {
         dialog.show();
     }
 
+    private void showFavorites() {
+        cardContainer.getChildren().clear();
+        int userId = SessionManager.getCurrentUser().getUser_Id();
+        List<AuctionItem> favoriteItems = ItemDAO.getFavoriteItems(userId);
+
+        for (AuctionItem item : favoriteItems) {
+            cardContainer.getChildren().add(new AuctionCard(item));
+        }
+    }
+
+    private void showLoginScreen() {
+        try {
+            SessionManager.logout();
+
+            Stage stage = (Stage) cardContainer.getScene().getWindow();
+
+            LoginView loginView = new LoginView();
+            loginView.show(stage, () -> {
+                // This code runs ONLY after the user logs in successfully again
+                MainDashboard freshDashboard = new MainDashboard();
+                freshDashboard.show(stage);});
+        } catch (Exception e) {
+            System.err.println("Failed to transition to login screen: " + e.getMessage());
+        }
+    }
 }

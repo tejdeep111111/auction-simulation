@@ -107,4 +107,65 @@ public class ItemDAO {
         }
         return logs;
     }
+
+    public static void toggleFavorite(int userId, int itemId) {
+        if(isFavorite(userId, itemId)) {
+            String sql = "DELETE FROM Favorites WHERE user_id = ? AND item_id = ?";
+            executeUpdate(sql, userId, itemId);
+        } else {
+            String sql = "INSERT INTO Favorites (user_id, item_id) VALUES (?, ?)";
+            executeUpdate(sql, userId, itemId);
+        }
+    }
+
+    //helper for toggle fn
+    private static void executeUpdate(String sql, int userId, int itemId) {
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, userId);
+            pstmt.setInt(2, itemId);
+            pstmt.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    public static boolean isFavorite(int userId, int itemId) {
+        String sql = "SELECT COUNT(*) FROM Favorites WHERE user_id = ? AND item_id = ?";
+        try(Connection connection = DatabaseManager.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, userId);
+            preparedStatement.setInt(2, itemId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            //as the query returns count - 1 if favorite and 0 if not
+            return resultSet.next() && resultSet.getInt(1) > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public static List<AuctionItem> getFavoriteItems(int userId) {
+        List<AuctionItem> items = new ArrayList<>();
+        // Join items and favorites tables to get the full item details
+        String sql = "SELECT i.* FROM Items i JOIN Favorites f ON i.item_id = f.item_id WHERE f.user_id = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, userId);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                items.add(new AuctionItem(
+                        rs.getInt("item_id"),
+                        rs.getString("name"),
+                        rs.getDouble("current_price"),
+                        rs.getInt("time_left"),
+                        rs.getString("category")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return items;
+    }
 }
