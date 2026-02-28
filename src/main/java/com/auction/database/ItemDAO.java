@@ -1,13 +1,9 @@
 package com.auction.database;
 
 import com.auction.model.AuctionItem;
-import javafx.scene.layout.StackPane;
-
-import javax.management.monitor.GaugeMonitor;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.SplittableRandom;
 
 //Class for accessing item data from database
 public class ItemDAO {
@@ -15,15 +11,14 @@ public class ItemDAO {
         List<AuctionItem> items = new ArrayList<>();
         String sql = category.equals("All") ? "SELECT * FROM Items" : "SELECT * FROM Items WHERE category = ?";
 
-        try(Connection connection = DatabaseManager.getConnection();
-            PreparedStatement statement = connection.prepareStatement(sql)) {
+        try(ConnectedStatement cs = prepareStatement(sql)) {
             if(!category.equals("All")) {
-                statement.setString(1, category);
+                cs.statement.setString(1, category);
             }
-            ResultSet resultSet = statement.executeQuery();
+            ResultSet resultSet = cs.statement.executeQuery();
 
             while(resultSet.next()) {
-                items.add(new AuctionItem( resultSet.getInt("item_id"), resultSet.getString("name"), resultSet.getDouble("current_price"), resultSet.getInt("time_left"), resultSet.getString("category")));
+                items.add(mapResultSetToAuctionItem(resultSet));
             }
 
         } catch (SQLException e) {
@@ -39,8 +34,8 @@ public class ItemDAO {
                 //Start a transaction
                 connection.setAutoCommit(false);
 
-                String updateQuery = "UPDATE Items SET current_price = ? WHERE name = ?";
-                try (PreparedStatement preparedStatement1 = connection.prepareStatement(updateQuery)) {
+                String sql = "UPDATE Items SET current_price = ? WHERE name = ?";
+                try (PreparedStatement preparedStatement1 = connection.prepareStatement(sql)) {
                     preparedStatement1.setDouble(1, newPrice);
                     preparedStatement1.setString(2, itemName);
                     preparedStatement1.executeUpdate();
@@ -65,15 +60,14 @@ public class ItemDAO {
 
     public static boolean addItem(String name, double price, int duration, String category) {
         String sql = "INSERT INTO Items (name, current_price, time_left, category) VALUES (?, ?, ?, ?)";
-        try (Connection connection = DatabaseManager.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+        try (ConnectedStatement cs = prepareStatement(sql)) {
 
-            preparedStatement.setString(1, name);
-            preparedStatement.setDouble(2, price);
-            preparedStatement.setInt(3, duration);
-            preparedStatement.setString(4, category);
+            cs.statement.setString(1, name);
+            cs.statement.setDouble(2, price);
+            cs.statement.setInt(3, duration);
+            cs.statement.setString(4, category);
 
-            return preparedStatement.executeUpdate() > 0;
+            return cs.statement.executeUpdate() > 0;
         } catch (SQLException  e) {
             e.printStackTrace();
             return false;
@@ -120,21 +114,19 @@ public class ItemDAO {
 
     //helper for toggle fn
     private static void executeUpdate(String sql, int userId, int itemId) {
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, userId);
-            pstmt.setInt(2, itemId);
-            pstmt.executeUpdate();
+        try (ConnectedStatement cs = prepareStatement(sql)) {
+            cs.statement.setInt(1, userId);
+            cs.statement.setInt(2, itemId);
+            cs.statement.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }
 
     public static boolean isFavorite(int userId, int itemId) {
         String sql = "SELECT COUNT(*) FROM Favorites WHERE user_id = ? AND item_id = ?";
-        try(Connection connection = DatabaseManager.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setInt(1, userId);
-            preparedStatement.setInt(2, itemId);
-            ResultSet resultSet = preparedStatement.executeQuery();
+        try(ConnectedStatement cs = prepareStatement(sql)) {
+            cs.statement.setInt(1, userId);
+            cs.statement.setInt(2, itemId);
+            ResultSet resultSet = cs.statement.executeQuery();
 
             //as the query returns count - 1 if favorite and 0 if not
             return resultSet.next() && resultSet.getInt(1) > 0;
@@ -150,22 +142,49 @@ public class ItemDAO {
         // Join items and favorites tables to get the full item details
         String sql = "SELECT i.* FROM Items i JOIN Favorites f ON i.item_id = f.item_id WHERE f.user_id = ?";
 
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, userId);
-            ResultSet rs = pstmt.executeQuery();
+        try (ConnectedStatement cs = prepareStatement(sql)) {
+            cs.statement.setInt(1, userId);
+            ResultSet rs = cs.statement.executeQuery();
             while (rs.next()) {
-                items.add(new AuctionItem(
-                        rs.getInt("item_id"),
-                        rs.getString("name"),
-                        rs.getDouble("current_price"),
-                        rs.getInt("time_left"),
-                        rs.getString("category")
-                ));
+                items.add(mapResultSetToAuctionItem(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return items;
+    }
+
+    private static AuctionItem mapResultSetToAuctionItem(ResultSet rs) throws SQLException{
+        return new AuctionItem(
+                rs.getInt("item_id"),
+                rs.getString("name"),
+                rs.getDouble("current_price"),
+                rs.getInt("time_left"),
+                rs.getString("category")
+        );
+    }
+
+    //private static inner class .this bundles Connection and Statement Together
+    private static class ConnectedStatement implements AutoCloseable {
+        final Connection connection;
+        final PreparedStatement statement;
+
+        ConnectedStatement(String sql) throws SQLException {
+            this.connection = DatabaseManager.getConnection();
+            this.statement = connection.prepareStatement(sql);
+        }
+
+        @Override
+        public void close() throws SQLException {
+            try {
+                statement.close();
+            } finally {
+                connection.close();
+            }
+        }
+    }
+
+    private static ConnectedStatement prepareStatement(String sql) throws SQLException {
+        return new ConnectedStatement(sql);
     }
 }

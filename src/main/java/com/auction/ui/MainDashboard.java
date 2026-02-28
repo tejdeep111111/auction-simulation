@@ -19,10 +19,13 @@ import javafx.scene.image.*;
 
 import java.sql.Statement;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 
 
 public class MainDashboard {
     private FlowPane cardContainer;
+
+    //private final ScheduledExecutorService sharedTimer =
 
     public void show(Stage stage) {
         BorderPane root = new BorderPane();
@@ -123,6 +126,7 @@ public class MainDashboard {
 
     }
 
+    //Causes each AuctionItem to spawn a single thread
     private void startAuctionTimer(AuctionItem item) {
         Thread timerThread = new Thread(() -> {
             while(item.getTimeLeft() > 0) {

@@ -124,9 +124,7 @@ public class AuctionCard extends VBox{
 
         button.setOnAction(e -> {
             double newPrice = item.currentPriceProperty().get() + amount;
-            if(item.placeBid(newPrice)) {
-                ItemDAO.placeBidWithLog(item.getId(),SessionManager.getCurrentUser().getUser_Id(), item.getName(), newPrice);
-            }
+            attemptBid(item, newPrice);
         });
 
         return button;
@@ -136,8 +134,7 @@ public class AuctionCard extends VBox{
         try {
             double amount = Double.parseDouble(field.getText());
 
-            if(item.placeBid(amount)) {
-                ItemDAO.placeBidWithLog(item.getId(), SessionManager.getCurrentUser().getUser_Id(), item.getName(), amount);
+            if(attemptBid(item, amount)) {
                 return true;
             } else {
                 Main.showToast("Bid too low!!");
@@ -170,5 +167,13 @@ public class AuctionCard extends VBox{
     private void updateStarUI(Label star, boolean isFav) {
         star.setText("☆");
         star.setTextFill(isFav ? javafx.scene.paint.Color.GOLD : javafx.scene.paint.Color.GRAY);
+    }
+
+    private boolean attemptBid(AuctionItem item, double newPrice) {
+        if(item.placeBid(newPrice)) {
+            ItemDAO.placeBidWithLog(item.getId(),SessionManager.getCurrentUser().getUser_Id(), item.getName(), newPrice);
+            return true;
+        }
+        return false;
     }
 }
