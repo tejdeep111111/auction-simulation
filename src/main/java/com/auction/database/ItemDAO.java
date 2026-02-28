@@ -63,6 +63,22 @@ public class ItemDAO {
 
     }
 
+    public static double getCurrentPrice(int itemId) {
+        String sql = "SELECT current_price FROM Items WHERE item_id = ?";
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, itemId);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getDouble("current_price");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
     public static boolean addItem(String name, double price, int duration, String category) {
         String sql = "INSERT INTO Items (name, current_price, time_left, category) VALUES (?, ?, ?, ?)";
         try (Connection connection = DatabaseManager.getConnection();
