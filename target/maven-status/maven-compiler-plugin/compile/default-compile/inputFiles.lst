@@ -1,0 +1,11 @@
+/home/runner/work/auction-simulation/auction-simulation/src/main/java/com/auction/Main.java
+/home/runner/work/auction-simulation/auction-simulation/src/main/java/com/auction/database/DatabaseManager.java
+/home/runner/work/auction-simulation/auction-simulation/src/main/java/com/auction/database/ItemDAO.java
+/home/runner/work/auction-simulation/auction-simulation/src/main/java/com/auction/database/UserDAO.java
+/home/runner/work/auction-simulation/auction-simulation/src/main/java/com/auction/model/AuctionItem.java
+/home/runner/work/auction-simulation/auction-simulation/src/main/java/com/auction/model/User.java
+/home/runner/work/auction-simulation/auction-simulation/src/main/java/com/auction/ui/AuctionCard.java
+/home/runner/work/auction-simulation/auction-simulation/src/main/java/com/auction/ui/LoginView.java
+/home/runner/work/auction-simulation/auction-simulation/src/main/java/com/auction/ui/MainDashboard.java
+/home/runner/work/auction-simulation/auction-simulation/src/main/java/com/auction/util/Enums.java
+/home/runner/work/auction-simulation/auction-simulation/src/main/java/com/auction/util/SessionManager.java
