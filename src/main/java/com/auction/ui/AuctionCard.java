@@ -123,6 +123,10 @@ public class AuctionCard extends VBox{
         button.setStyle("-fx-background-color: #e0e0e0; -fx-border-color: #ccc; -fx-border-radius: 5; -fx-background-radius: 5;");
 
         button.setOnAction(e -> {
+            if (!syncPriceFromDb(item)) {
+                Main.showToast("Could not fetch current price. Please try again.");
+                return;
+            }
             double newPrice = item.currentPriceProperty().get() + amount;
             if(item.placeBid(newPrice)) {
                 ItemDAO.placeBidWithLog(item.getId(),SessionManager.getCurrentUser().getUser_Id(), item.getName(), newPrice);
@@ -136,6 +140,11 @@ public class AuctionCard extends VBox{
         try {
             double amount = Double.parseDouble(field.getText());
 
+            if (!syncPriceFromDb(item)) {
+                Main.showToast("Could not fetch current price. Please try again.");
+                return false;
+            }
+
             if(item.placeBid(amount)) {
                 ItemDAO.placeBidWithLog(item.getId(), SessionManager.getCurrentUser().getUser_Id(), item.getName(), amount);
                 return true;
@@ -147,6 +156,15 @@ public class AuctionCard extends VBox{
             Main.showToast("Numbers only!!");
             return false;
         }
+    }
+
+    private boolean syncPriceFromDb(AuctionItem item) {
+        double dbPrice = ItemDAO.getCurrentPrice(item.getId());
+        if (dbPrice < 0) {
+            return false;
+        }
+        item.currentPriceProperty().set(dbPrice);
+        return true;
     }
 
     private void setupFavoriteStar(AuctionItem item) {
