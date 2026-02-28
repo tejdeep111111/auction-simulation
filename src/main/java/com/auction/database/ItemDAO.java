@@ -23,7 +23,7 @@ public class ItemDAO {
             ResultSet resultSet = statement.executeQuery();
 
             while(resultSet.next()) {
-                items.add(new AuctionItem( resultSet.getInt("item_id"), resultSet.getString("name"), resultSet.getDouble("current_price"), resultSet.getInt("time_left"), resultSet.getString("category")));
+                items.add(mapResultSetToAuctionItem(resultSet));
             }
 
         } catch (SQLException e) {
@@ -155,17 +155,21 @@ public class ItemDAO {
             pstmt.setInt(1, userId);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                items.add(new AuctionItem(
-                        rs.getInt("item_id"),
-                        rs.getString("name"),
-                        rs.getDouble("current_price"),
-                        rs.getInt("time_left"),
-                        rs.getString("category")
-                ));
+                items.add(mapResultSetToAuctionItem(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return items;
+    }
+
+    private static AuctionItem mapResultSetToAuctionItem(ResultSet rs) throws SQLException {
+        return new AuctionItem(
+                rs.getInt("item_id"),
+                rs.getString("name"),
+                rs.getDouble("current_price"),
+                rs.getInt("time_left"),
+                rs.getString("category")
+        );
     }
 }
