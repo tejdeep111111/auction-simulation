@@ -132,7 +132,14 @@ public class MainDashboard {
             while(item.getTimeLeft() > 0) {
                 try {
                     Thread.sleep(1000); //1second
-                    Platform.runLater(() -> item.setTimeLeft(item.getTimeLeft() - 1));
+                    double latestPrice = ItemDAO.getCurrentPriceFromDB(item.getId());
+                    Platform.runLater(() -> {
+                        item.setTimeLeft(item.getTimeLeft() - 1);
+                        // Sync price from DB so all instances see real-time updates
+                        if (latestPrice > item.currentPriceProperty().get()) {
+                            item.currentPriceProperty().set(latestPrice);
+                        }
+                    });
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }

@@ -170,6 +170,12 @@ public class AuctionCard extends VBox{
     }
 
     private boolean attemptBid(AuctionItem item, double newPrice) {
+        // Sync the latest price from DB before validating so we don't accept
+        // bids based on a stale in-memory price from another instance's bid
+        double dbPrice = ItemDAO.getCurrentPriceFromDB(item.getId());
+        if (dbPrice > item.currentPriceProperty().get()) {
+            item.currentPriceProperty().set(dbPrice);
+        }
         if(item.placeBid(newPrice)) {
             ItemDAO.placeBidWithLog(item.getId(),SessionManager.getCurrentUser().getUser_Id(), item.getName(), newPrice);
             return true;
