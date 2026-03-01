@@ -4,6 +4,7 @@ import com.auction.Main;
 import com.auction.database.UserDAO;
 import com.auction.model.User;
 import com.auction.util.SessionManager;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -17,7 +18,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.scene.control.Label;
 
-import javax.swing.*;
 
 public class LoginView {
     //Runnable is an Functional Interface, we use a lambda expression to set some lines of code to it so that this set of code will be executed without going elsewhere out of this fn

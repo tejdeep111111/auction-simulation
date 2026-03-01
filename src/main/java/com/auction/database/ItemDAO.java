@@ -164,6 +164,20 @@ public class ItemDAO {
         );
     }
 
+    public static double getCurrentPriceFromDB(int itemId) {
+        String sql ="SELECT current_price FROM Items WHERE item_id = ?";
+        try(ConnectedStatement cs = prepareStatement(sql)) {
+            cs.statement.setInt(1, itemId);
+            ResultSet rs = cs.statement.executeQuery();
+            if(rs.next()) {
+                return rs.getDouble("current_price");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
     //private static inner class .this bundles Connection and Statement Together
     private static class ConnectedStatement implements AutoCloseable {
         final Connection connection;

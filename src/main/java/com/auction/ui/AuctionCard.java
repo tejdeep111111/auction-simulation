@@ -123,6 +123,10 @@ public class AuctionCard extends VBox{
         button.setStyle("-fx-background-color: #e0e0e0; -fx-border-color: #ccc; -fx-border-radius: 5; -fx-background-radius: 5;");
 
         button.setOnAction(e -> {
+            double dbPrice = ItemDAO.getCurrentPriceFromDB(item.getId());
+            if(dbPrice > 0) {
+                item.currentPriceProperty().set(dbPrice);
+            }
             double newPrice = item.currentPriceProperty().get() + amount;
             attemptBid(item, newPrice);
         });
@@ -134,6 +138,10 @@ public class AuctionCard extends VBox{
         try {
             double amount = Double.parseDouble(field.getText());
 
+            double dbPrice = ItemDAO.getCurrentPriceFromDB(item.getId());
+            if(dbPrice > 0) {
+                item.currentPriceProperty().set(dbPrice);
+            }
             if(attemptBid(item, amount)) {
                 return true;
             } else {
@@ -170,6 +178,11 @@ public class AuctionCard extends VBox{
     }
 
     private boolean attemptBid(AuctionItem item, double newPrice) {
+        //Sync the latest price from DB before validating so we don't accept bid based on in-memory price
+        double dbPrice = ItemDAO.getCurrentPriceFromDB(item.getId());
+        if(dbPrice > item.currentPriceProperty().get()) {
+            item.currentPriceProperty().set(dbPrice);
+        }
         if(item.placeBid(newPrice)) {
             ItemDAO.placeBidWithLog(item.getId(),SessionManager.getCurrentUser().getUser_Id(), item.getName(), newPrice);
             return true;
