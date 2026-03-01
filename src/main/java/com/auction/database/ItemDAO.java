@@ -58,6 +58,20 @@ public class ItemDAO {
 
     }
 
+    public static double getCurrentPriceFromDB(int itemId) {
+        String sql = "SELECT current_price FROM Items WHERE item_id = ?";
+        try (ConnectedStatement cs = prepareStatement(sql)) {
+            cs.statement.setInt(1, itemId);
+            ResultSet rs = cs.statement.executeQuery();
+            if (rs.next()) {
+                return rs.getDouble("current_price");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1; // Indicates lookup failure; callers should treat negative as "no update"
+    }
+
     public static boolean addItem(String name, double price, int duration, String category) {
         String sql = "INSERT INTO Items (name, current_price, time_left, category) VALUES (?, ?, ?, ?)";
         try (ConnectedStatement cs = prepareStatement(sql)) {

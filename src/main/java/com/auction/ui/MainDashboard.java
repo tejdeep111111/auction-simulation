@@ -17,15 +17,13 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.scene.image.*;
 
-import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
 
 
 public class MainDashboard {
     private FlowPane cardContainer;
-
-    //private final ScheduledExecutorService sharedTimer =
+    private final List<Thread> activeTimers = new ArrayList<>();
 
     public void show(Stage stage) {
         BorderPane root = new BorderPane();
@@ -117,6 +115,7 @@ public class MainDashboard {
     }
 
     private void refreshItems(String category) {
+        stopAllTimers();
         cardContainer.getChildren().clear();
         List<AuctionItem> items = ItemDAO.getItemsByCategory(category);
         for(AuctionItem item : items) {
@@ -132,14 +131,31 @@ public class MainDashboard {
             while(item.getTimeLeft() > 0) {
                 try {
                     Thread.sleep(1000); //1second
-                    Platform.runLater(() -> item.setTimeLeft(item.getTimeLeft() - 1));
+                    double latestPrice = ItemDAO.getCurrentPriceFromDB(item.getId());
+                    Platform.runLater(() -> {
+                        item.setTimeLeft(item.getTimeLeft() - 1);
+                        // Sync price from DB so all instances see real-time updates
+                        if (latestPrice > item.currentPriceProperty().get()) {
+                            item.currentPriceProperty().set(latestPrice);
+                        }
+                    });
                 } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                    Thread.currentThread().interrupt(); // restore interrupted flag and exit cleanly
+                    return;
                 }
             }
         });
         timerThread.setDaemon(true);
         timerThread.start();
+        activeTimers.add(timerThread);
+    }
+
+    // Interrupts and clears all active timer threads to free their resources
+    private void stopAllTimers() {
+        for (Thread t : activeTimers) {
+            t.interrupt();
+        }
+        activeTimers.clear();
     }
 
     //Dialog box to add an item to the list by admin
@@ -206,6 +222,7 @@ public class MainDashboard {
     }
 
     private void showFavorites() {
+        stopAllTimers();
         cardContainer.getChildren().clear();
         int userId = SessionManager.getCurrentUser().getUser_Id();
         List<AuctionItem> favoriteItems = ItemDAO.getFavoriteItems(userId);
@@ -217,6 +234,7 @@ public class MainDashboard {
 
     private void showLoginScreen() {
         try {
+            stopAllTimers(); // stop all running timers before leaving the dashboard
             SessionManager.logout();
 
             Stage stage = (Stage) cardContainer.getScene().getWindow();
