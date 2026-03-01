@@ -17,8 +17,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.scene.control.Label;
 
-import javax.swing.*;
-
 public class LoginView {
     //Runnable is an Functional Interface, we use a lambda expression to set some lines of code to it so that this set of code will be executed without going elsewhere out of this fn
     public void show(Stage stage, Runnable onSuccess) {
